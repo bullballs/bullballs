@@ -3,9 +3,8 @@
 nixPkgs = ["nodejs_22"]
 
 [phases.install]
-# Ensure lockfile is present before install (fixes npm ci cache layer errors)
-onlyIncludeFiles = ["package.json", "package-lock.json"]
-cmds = ["npm ci --omit=dev"]
+onlyIncludeFiles = ["server/package.json", "server/package-lock.json"]
+cmds = ["cd server && npm ci --omit=dev"]
 
 [phases.build]
 cmds = ["echo 'API service — skipping frontend build'"]
