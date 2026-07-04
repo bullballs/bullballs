@@ -1,7 +1,10 @@
+# Railway / Nixpacks — API-only deploy (no Vite frontend build)
 [phases.setup]
-nixPkgs = ["nodejs_22", "npm-9_x"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
+# Ensure lockfile is present before install (fixes npm ci cache layer errors)
+onlyIncludeFiles = ["package.json", "package-lock.json"]
 cmds = ["npm ci --omit=dev"]
 
 [phases.build]
