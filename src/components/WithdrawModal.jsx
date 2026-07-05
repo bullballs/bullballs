@@ -8,6 +8,7 @@ import {
   generateNewBurnerWallet,
   getOrCreateBurnerWallet,
 } from '../burnerWallet';
+import ConfirmDialog from './ConfirmDialog';
 
 function formatCountdown(ms) {
   if (ms <= 0) return '00:00:00';
@@ -35,12 +36,14 @@ export default function WithdrawModal({
   const [burnerWallet, setBurnerWallet] = useState(null);
   const [copiedField, setCopiedField] = useState('');
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
 
   useEffect(() => {
     if (open) {
       setBurnerWallet(getOrCreateBurnerWallet());
       setCopiedField('');
       setShowPrivateKey(false);
+      setShowRegenerateConfirm(false);
     }
   }, [open]);
 
@@ -58,16 +61,17 @@ export default function WithdrawModal({
   };
 
   const handleRegenerate = () => {
-    const confirmed = window.confirm(
-      'Generate a NEW burner wallet?\n\nYour old private key will be lost unless you already exported it. SOL sent to the old address cannot be moved without the old key.'
-    );
-    if (!confirmed) return;
+    audio.playTap();
+    setShowRegenerateConfirm(true);
+  };
 
+  const handleRegenerateConfirm = () => {
     audio.playUpgrade();
     const next = generateNewBurnerWallet();
     setBurnerWallet(next);
     setShowPrivateKey(false);
     setCopiedField('');
+    setShowRegenerateConfirm(false);
   };
 
   const handleConfirm = () => {
@@ -255,6 +259,17 @@ export default function WithdrawModal({
               </div>
             </div>
           </motion.div>
+
+          <ConfirmDialog
+            open={showRegenerateConfirm}
+            title="Generate New Burner?"
+            message={'Your old private key will be lost unless you already exported it.\n\nSOL sent to the old address cannot be moved without the old key.'}
+            confirmLabel="NEW BURNER"
+            cancelLabel="KEEP CURRENT"
+            tone="pink"
+            onConfirm={handleRegenerateConfirm}
+            onCancel={() => setShowRegenerateConfirm(false)}
+          />
         </motion.div>
       )}
     </AnimatePresence>

@@ -13,6 +13,7 @@ import {
 } from '../../shared/gameBalance.js';
 import PendingRewards from './PendingRewards';
 import HowToPlayModal from './HowToPlayModal';
+import ConfirmDialog from './ConfirmDialog';
 import { loadGameSave, saveGameSave, clearGameSave } from '../gameSave';
 
 const ENABLE_CLICK_RATE_LIMIT = true;
@@ -29,6 +30,7 @@ export default function IdleGameDemo() {
   const [particles, setParticles] = useState([]);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showOfflineBanner, setShowOfflineBanner] = useState(
     initialSave.offlineMs >= 60_000
   );
@@ -154,11 +156,11 @@ export default function IdleGameDemo() {
   const progressPercent = Math.min((score / currentMilestone.target) * 100, 100);
 
   const handleResetProgress = () => {
-    const confirmed = window.confirm(
-      'Reset ALL game progress?\n\nThis wipes $BALLS, upgrades, stages, vault balance, and cooldowns. Your burner wallet stays saved.'
-    );
-    if (!confirmed) return;
+    audio.playTap();
+    setShowResetConfirm(true);
+  };
 
+  const handleResetConfirm = () => {
     audio.playExplosion();
     clearGameSave();
     window.location.reload();
@@ -196,6 +198,17 @@ export default function IdleGameDemo() {
       </div>
 
       <HowToPlayModal open={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Reset All Progress?"
+        message={'This wipes $BALLS, upgrades, stages, vault balance, and cooldowns.\n\nYour burner wallet stays saved.'}
+        confirmLabel="RESET"
+        cancelLabel="CANCEL"
+        tone="pink"
+        onConfirm={handleResetConfirm}
+        onCancel={() => setShowResetConfirm(false)}
+      />
 
       <AnimatePresence>
         {showOfflineBanner && (
