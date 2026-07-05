@@ -51,6 +51,32 @@ export const VETERAN_RANKS = [
 export const STAGE_MAX_USD_PER_HOUR = [11, 18, 30, 48, 66, 85, 105];
 export const ABSOLUTE_MAX_CLAIM_USD = 350;
 
+/** Small USD/sec bonus per completed social task (one-time each). */
+export const SOCIAL_TASK_BONUS_PER_SEC = 0.000025;
+export const MAX_SOCIAL_TASKS = 2;
+
+export const SOCIAL_TASK_DEFS = [
+  {
+    id: 'post_ca',
+    title: 'Post the $BALLS contract on X',
+    description: 'Post the contract address on X, then paste the post link to verify.',
+    bonusLabel: '+$0.000025/sec',
+  },
+  {
+    id: 'post_shill',
+    title: 'Shill BULL BALLS on X',
+    description: 'Share bullballs.fun on X, then paste the post link to verify.',
+    bonusLabel: '+$0.000025/sec',
+  },
+];
+
+export function getSocialBonusRate(completedTaskIds = []) {
+  if (!Array.isArray(completedTaskIds)) return 0;
+  const completed = new Set(completedTaskIds);
+  const count = SOCIAL_TASK_DEFS.filter((task) => completed.has(task.id)).length;
+  return Math.min(count * SOCIAL_TASK_BONUS_PER_SEC, SOCIAL_TASK_DEFS.length * SOCIAL_TASK_BONUS_PER_SEC);
+}
+
 export const PERKS = [
   { rank: 'Fresh Jeet', mult: '1x', unlock: 'Stage 1' },
   { rank: 'Trench Rat', mult: '1.25x', unlock: 'Stage 2' },
@@ -65,7 +91,7 @@ export function getCpsGain(upgrade) {
   return upgrade.cpsBonus * (1 + upgrade.multiplier * CPS_SCALE_PER_LEVEL);
 }
 
-export function getRewardBreakdown(cps, milestoneIdx, score) {
+export function getRewardBreakdown(cps, milestoneIdx, score, socialBonus = 0) {
   const stageIdx = Math.min(milestoneIdx, STAGE_MULTIPLIERS.length - 1);
   const stageMult = STAGE_MULTIPLIERS[stageIdx];
   const cpsBonus = Math.min(cps * CPS_REWARD_RATE, MAX_CPS_BONUS);
@@ -74,7 +100,7 @@ export function getRewardBreakdown(cps, milestoneIdx, score) {
     MAX_HOLD_BONUS
   );
   const subtotal = REWARD_BASE + cpsBonus + holdingBonus;
-  const uncapped = subtotal * stageMult;
+  const uncapped = subtotal * stageMult + Math.max(0, socialBonus);
   const cap = MAX_ACCRUAL_BY_STAGE[stageIdx];
   const total = Math.min(uncapped, cap);
 
@@ -83,6 +109,7 @@ export function getRewardBreakdown(cps, milestoneIdx, score) {
     stageMult,
     cpsBonus,
     holdingBonus,
+    socialBonus: Math.max(0, socialBonus),
     subtotal,
     total,
     capped: uncapped > cap,
@@ -90,6 +117,6 @@ export function getRewardBreakdown(cps, milestoneIdx, score) {
   };
 }
 
-export function getAccrualRate(cps, milestoneIdx, score) {
-  return getRewardBreakdown(cps, milestoneIdx, score).total;
+export function getAccrualRate(cps, milestoneIdx, score, socialBonus = 0) {
+  return getRewardBreakdown(cps, milestoneIdx, score, socialBonus).total;
 }

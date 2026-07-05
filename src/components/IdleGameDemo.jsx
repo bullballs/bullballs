@@ -12,9 +12,11 @@ import {
   getCpsGain,
 } from '../../shared/gameBalance.js';
 import PendingRewards from './PendingRewards';
+import SocialTasksPanel from './SocialTasksPanel';
 import HowToPlayModal from './HowToPlayModal';
 import ConfirmDialog from './ConfirmDialog';
 import { loadGameSave, saveGameSave, clearGameSave } from '../gameSave';
+import { getSocialBonusFromStorage } from '../socialTasks';
 
 const ENABLE_CLICK_RATE_LIMIT = true;
 
@@ -36,6 +38,7 @@ export default function IdleGameDemo() {
   );
 
   const [upgrades, setUpgrades] = useState(initialSave.upgrades);
+  const [socialBonus, setSocialBonus] = useState(() => getSocialBonusFromStorage());
 
   const gameLoopRef = useRef(null);
   const clickTimestampsRef = useRef([]);
@@ -238,7 +241,10 @@ export default function IdleGameDemo() {
         score={score}
         vault={vault}
         onVaultChange={setVault}
+        socialBonus={socialBonus}
       />
+
+      <SocialTasksPanel onBonusChange={setSocialBonus} />
 
       {/* Main Game Interface Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">

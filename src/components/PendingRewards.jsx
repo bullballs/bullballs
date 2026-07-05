@@ -58,7 +58,7 @@ const SolanaIcon = ({ className }) => (
   </svg>
 );
 
-export default function PendingRewards({ milestoneIdx, cps, score, vault, onVaultChange }) {
+export default function PendingRewards({ milestoneIdx, cps, score, vault, onVaultChange, socialBonus = 0 }) {
   const { pendingUsd, harvestCooldownEndsAt, cooldownStarted } = vault;
   const [now, setNow] = useState(Date.now());
   const [copied, setCopied] = useState(false);
@@ -96,7 +96,7 @@ export default function PendingRewards({ milestoneIdx, cps, score, vault, onVaul
   };
 
   const isWithdrawUnlocked = milestoneIdx >= HARVEST_UNLOCK_MILESTONE;
-  const breakdown = getRewardBreakdown(cps, milestoneIdx, score);
+  const breakdown = getRewardBreakdown(cps, milestoneIdx, score, socialBonus);
   const usdPerSec = breakdown.total;
   const pendingSol = pendingUsd / solPrice;
   const cooldownRemaining = harvestCooldownEndsAt ? Math.max(0, harvestCooldownEndsAt - now) : 0;
@@ -326,7 +326,7 @@ export default function PendingRewards({ milestoneIdx, cps, score, vault, onVaul
       </div>
 
       {/* Rate breakdown — shows why early players earn more */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 border border-gray-800 bg-black/40 p-2 rounded">
+      <div className={`grid gap-2 mb-4 border border-gray-800 bg-black/40 p-2 rounded ${breakdown.socialBonus > 0 ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
         <div className="text-center">
           <div className="text-[7px] font-arcade text-gray-600 uppercase">Base</div>
           <div className="text-[9px] font-mono text-gray-400">${breakdown.base.toFixed(4)}</div>
@@ -343,6 +343,12 @@ export default function PendingRewards({ milestoneIdx, cps, score, vault, onVaul
           <div className="text-[7px] font-arcade text-gray-600 uppercase">Hold Bonus</div>
           <div className="text-[9px] font-mono text-retro-green">+${breakdown.holdingBonus.toFixed(4)}</div>
         </div>
+        {breakdown.socialBonus > 0 && (
+          <div className="text-center">
+            <div className="text-[7px] font-arcade text-gray-600 uppercase">Shill Boost</div>
+            <div className="text-[9px] font-mono text-retro-pink">+${breakdown.socialBonus.toFixed(5)}</div>
+          </div>
+        )}
       </div>
 
       {justHarvested && withdrawSummary && (

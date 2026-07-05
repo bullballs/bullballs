@@ -14,7 +14,9 @@ class RetroAudioEngine {
     this.isBgmPlaying = false;
     this.bgmVolume = 0.4;
     this.muted = false;
+    this.autoplayUnlockBound = false;
     this.handleBgmEnded = this.handleBgmEnded.bind(this);
+    this.handleAutoplayUnlock = this.handleAutoplayUnlock.bind(this);
   }
 
   setMuted(muted) {
@@ -22,6 +24,46 @@ class RetroAudioEngine {
     if (this.muted) {
       this.stopBgm();
     }
+  }
+
+  /** Retry BGM after browser autoplay block — first tap/click anywhere unlocks audio. */
+  enableAutoplayUnlock() {
+    if (this.autoplayUnlockBound) return;
+    this.autoplayUnlockBound = true;
+
+    document.addEventListener('pointerdown', this.handleAutoplayUnlock, { passive: true });
+    document.addEventListener('keydown', this.handleAutoplayUnlock);
+    document.addEventListener('touchstart', this.handleAutoplayUnlock, { passive: true });
+  }
+
+  disableAutoplayUnlock() {
+    if (!this.autoplayUnlockBound) return;
+    this.autoplayUnlockBound = false;
+
+    document.removeEventListener('pointerdown', this.handleAutoplayUnlock);
+    document.removeEventListener('keydown', this.handleAutoplayUnlock);
+    document.removeEventListener('touchstart', this.handleAutoplayUnlock);
+  }
+
+  handleAutoplayUnlock() {
+    if (this.muted) return;
+
+    this.init();
+
+    if (!this.isBgmPlaying) {
+      this.startBgm();
+      return;
+    }
+
+    if (this.bgmAudio?.paused) {
+      this.bgmAudio.play().catch(() => {});
+    }
+  }
+
+  tryStartBgm() {
+    if (this.muted) return;
+    this.enableAutoplayUnlock();
+    this.startBgm();
   }
 
   init() {
@@ -213,8 +255,14 @@ class RetroAudioEngine {
 
     this.bgmAudio = new Audio(BGM_TRACKS[this.bgmTrackIndex]);
     this.bgmAudio.volume = this.bgmVolume;
+    this.bgmAudio.preload = 'auto';
     this.bgmAudio.addEventListener('ended', this.handleBgmEnded);
-    this.bgmAudio.play().catch(() => {});
+    this.bgmAudio.play()
+      .then(() => this.disableAutoplayUnlock())
+      .catch(() => {
+        this.isBgmPlaying = false;
+        this.enableAutoplayUnlock();
+      });
   }
 
   handleBgmEnded() {

@@ -18,8 +18,9 @@ function App() {
   useEffect(() => {
     audio.setMuted(soundMuted);
     if (!soundMuted) {
-      audio.init();
-      audio.startBgm();
+      audio.tryStartBgm();
+    } else {
+      audio.enableAutoplayUnlock();
     }
   }, []);
 
@@ -37,6 +38,10 @@ function App() {
   };
 
   const handleInsertCoin = () => {
+    audio.init();
+    if (!soundMuted) {
+      audio.startBgm();
+    }
     audio.playCoin();
     setCoins(prev => prev + 1);
   };

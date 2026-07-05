@@ -6,6 +6,7 @@ import {
   MILESTONE_TARGETS,
   getAccrualRate,
 } from '../shared/gameBalance.js';
+import { getSocialBonusFromStorage } from './socialTasks.js';
 
 const SAVE_VERSION = 1;
 const STORAGE_KEY = 'balls_game_save_v1';
@@ -111,7 +112,7 @@ export function loadGameSave() {
     if (offlineMs > 0) {
       const offlineSec = offlineMs / 1000;
       offlineBallGain = cps * offlineSec;
-      const accrualRate = getAccrualRate(cps, milestoneIdx, score);
+      const accrualRate = getAccrualRate(cps, milestoneIdx, score, getSocialBonusFromStorage());
       offlineUsdGain = accrualRate * offlineSec;
       score += offlineBallGain;
       milestoneIdx = syncMilestoneIdx(score, milestoneIdx);
