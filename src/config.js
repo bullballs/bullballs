@@ -1,4 +1,4 @@
-const DEFAULT_TOKEN_CA = 'BAlLS7x1pUXs2U8hQW5Yd7S13v1kPnQZ9Mpump';
+const DEFAULT_TOKEN_CA = '3sALX52ep34TGcyArVYj4j2XgE9Fvty47sPjo2M5pump';
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 function envStr(key, fallback = '') {
