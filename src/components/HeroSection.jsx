@@ -1,13 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { audio } from './AudioEngine';
 import heroBg from '../assets/landingbgdone.jpg';
-import { Copy, Check, TrendingUp, ShieldAlert, Award } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Copy, Check, TrendingUp, TrendingDown, ShieldAlert } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { appConfig } from '../config';
+import { fetchTokenUsdPrice, formatTokenUsdPrice } from '../tokenPrice';
+
+const TOKEN_PRICE_POLL_MS = 30_000;
 
 export default function HeroSection() {
   const [copied, setCopied] = useState(false);
+  const [tokenPrice, setTokenPrice] = useState(null);
+  const [tokenPriceLive, setTokenPriceLive] = useState(false);
+  const [priceTrend, setPriceTrend] = useState('flat');
+  const lastPriceRef = useRef(null);
   const { contractAddress, buyUrl } = appConfig.token;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPrice = async () => {
+      try {
+        const price = await fetchTokenUsdPrice();
+        if (cancelled) return;
+
+        const prev = lastPriceRef.current;
+        if (prev !== null) {
+          if (price > prev) setPriceTrend('up');
+          else if (price < prev) setPriceTrend('down');
+          else setPriceTrend('flat');
+        }
+        lastPriceRef.current = price;
+        setTokenPrice(price);
+        setTokenPriceLive(true);
+      } catch {
+        if (!cancelled) setTokenPriceLive(false);
+      }
+    };
+
+    loadPrice();
+    const poll = setInterval(loadPrice, TOKEN_PRICE_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+    };
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(contractAddress);
@@ -115,7 +152,19 @@ export default function HeroSection() {
           <div className="bg-[#121216]/90 border-2 border-gray-800 p-3 flex flex-col items-center justify-center">
             <span className="text-[9px] font-arcade text-gray-500 uppercase">Token Price</span>
             <span className="text-sm font-arcade text-retro-green mt-1 flex items-center gap-1">
-              $0.00694 <TrendingUp className="w-3.5 h-3.5 text-retro-green animate-bounce" />
+              {tokenPrice !== null ? (
+                <>${formatTokenUsdPrice(tokenPrice)}</>
+              ) : (
+                <span className="text-gray-500">—</span>
+              )}
+              {priceTrend === 'down' ? (
+                <TrendingDown className="w-3.5 h-3.5 text-retro-red" />
+              ) : (
+                <TrendingUp className={`w-3.5 h-3.5 text-retro-green ${priceTrend === 'up' ? 'animate-bounce' : ''}`} />
+              )}
+            </span>
+            <span className={`text-[7px] font-arcade mt-1 ${tokenPriceLive ? 'text-retro-green' : 'text-yellow-500'}`}>
+              {tokenPriceLive ? 'LIVE · JUP' : 'FEED LOADING'}
             </span>
           </div>
           
